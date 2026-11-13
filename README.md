@@ -6,6 +6,19 @@ abiertos de la Agencia Nacional de Infrastructure (ANI).
 
 ## Cómo ejecutarla
 
+### En línea (GitHub Pages)
+
+La aplicación está publicada en GitHub Pages mediante el workflow
+`.github/workflows/pages.yml`. Cada `push` a `main` redespliega el sitio:
+
+👉 **https://ojperdomoc.github.io/recaudo-ani/**
+
+> Nota: el workflow vive en `main` porque GitHub Pages despliega desde la rama por
+> defecto del repositorio. El PR de esta rama incluye el workflow para que, al
+> fusionarla, quede activo el despliegue automático.
+
+### En local
+
 ```bash
 python3 -m http.server 8000
 # abrir http://localhost:8000/index.html

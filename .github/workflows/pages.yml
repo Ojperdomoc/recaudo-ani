@@ -1,0 +1,47 @@
+name: Deploy a GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+# Habilita los permisos necesarios para desplegar en GitHub Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Permite que un despliegue concurrente cancele el anterior.
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir artefacto estático
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+          exclude: |
+            .git/
+            .github/
+            README.md
+            readme
+            preparar_datos.py
+            datos/
+
+      - name: Desplegar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
