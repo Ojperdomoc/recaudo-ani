@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estimación de recaudo vehicular ANI — Peajes de Colombia</title>
+<style>
+:root{
+  --azul:#0f2a44; --azul2:#1b4f72; --teal:#0e9f6e; --teal2:#0b7a55;
+  --fondo:#f4f6fa; --card:#ffffff; --borde:#dbe3ee; --texto:#1a2b3c; --suave:#5b6b7f;
+  --amber:#b45309; --amber-bg:#fef3c7; --red:#b91c1c; --red-bg:#fee2e2; --green-bg:#d1fae5;
+  --radio:12px; --sombra:0 2px 10px rgba(15,42,68,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--fondo);color:var(--texto);line-height:1.5}
+header{background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;padding:22px 20px 18px}
+header h1{margin:0 0 4px;font-size:24px}
+header p{margin:0;opacity:.9;font-size:14px}
+.badges{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
+.badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:3px 10px;font-size:12px}
+nav{display:flex;gap:4px;padding:0 20px;background:#fff;border-bottom:1px solid var(--borde);position:sticky;top:0;z-index:20;overflow-x:auto}
+nav button{border:0;background:none;padding:12px 16px;font-size:14px;cursor:pointer;color:var(--suave);border-bottom:3px solid transparent;white-space:nowrap}
+nav button.activo{color:var(--azul);border-bottom-color:var(--teal);font-weight:700}
+main{max-width:1280px;margin:0 auto;padding:18px}
+.card{background:var(--card);border:1px solid var(--borde);border-radius:var(--radio);box-shadow:var(--sombra);padding:16px;margin-bottom:16px}
+.card h2{margin:0 0 10px;font-size:17px;color:var(--azul)}
+.card h3{margin:14px 0 8px;font-size:14px;color:var(--azul)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
+@media(max-width:1100px){.g5{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--borde);border-radius:var(--radio);padding:12px 14px;box-shadow:var(--sombra)}
+.kpi .et{font-size:12px;color:var(--suave);text-transform:uppercase;letter-spacing:.04em}
+.kpi .vl{font-size:20px;font-weight:800;color:var(--azul);margin-top:2px}
+.kpi .sb{font-size:12px;color:var(--suave)}
+.controles{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+.campo{display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1}
+.campo label{font-size:12px;font-weight:700;color:var(--suave);text-transform:uppercase;letter-spacing:.03em}
+select,input[type=text],input[type=search]{padding:9px 10px;border:1px solid var(--borde);border-radius:8px;font-size:14px;background:#fff;color:var(--texto);width:100%}
+input[type=range]{width:100%}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;padding:8px 0}
+.btn{background:var(--teal);color:#fff;border:0;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer}
+.btn:hover{background:var(--teal2)}
+.btn.sec{background:#fff;color:var(--azul);border:1px solid var(--borde)}
+.btn.sec:hover{background:#eef2f7}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 8px;border-bottom:1px solid #e8edf3;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--suave);font-size:12px;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;user-select:none}
+th:hover{color:var(--azul)}
+tr:hover td{background:#f7fafc}
+.tag{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11px;font-weight:700}
+.tag.activo{background:var(--green-bg);color:var(--teal2)}
+.tag.cerrado{background:var(--amber-bg);color:var(--amber)}
+.tag.sin{background:var(--red-bg);color:var(--red)}
+.aviso{background:var(--amber-bg);border:1px solid #fcd34d;color:#92400e;border-radius:8px;padding:10px 12px;font-size:13px;margin:10px 0}
+.info{background:#e0f2fe;border:1px solid #7dd3fc;color:#0c4a6e;border-radius:8px;padding:10px 12px;font-size:13px;margin:10px 0}
+.grafico{width:100%;overflow-x:auto}
+.grafico svg{display:block;max-width:100%}
+.tooltip{position:absolute;pointer-events:none;background:#0f2a44;color:#fff;border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.25);display:none;z-index:50;max-width:280px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--suave);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:22px;height:3px;border-radius:2px;vertical-align:middle}
+.tabla-wrap{overflow:auto;max-height:560px;border:1px solid var(--borde);border-radius:8px}
+.mono{font-variant-numeric:tabular-nums}
+footer{color:var(--suave);font-size:12px;text-align:center;padding:18px}
+.reporte h2{font-size:22px}
+.reporte .ficha{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+@media(max-width:800px){.reporte .ficha{grid-template-columns:1fr 1fr}}
+.reporte .ficha div{background:#f8fafc;border:1px solid var(--borde);border-radius:8px;padding:10px}
+.reporte .ficha b{display:block;font-size:12px;color:var(--suave);text-transform:uppercase}
+.reporte .ficha span{font-size:16px;font-weight:700;color:var(--azul)}
+@media print{
+  body{background:#fff}
+  header,nav,.no-print,footer{display:none!important}
+  main{padding:0;max-width:none}
+  .card{box-shadow:none;border:0;padding:0}
+  #tab-reporte .card{margin:0}
+  .seccion{display:none!important}
+  #tab-reporte{display:block!important}
+  .tabla-wrap{max-height:none;overflow:visible}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Estimación de recaudo vehicular ANI</h1>
+  <p>Peajes de Colombia · Serie mensual 2014–2026 · Entrenamiento en los primeros 10 años y prueba en los últimos años</p>
+  <div class="badges" id="badges"></div>
+</header>
+<nav>
+  <button data-tab="estimacion" class="activo">Estimación</button>
+  <button data-tab="resumen">Resumen estadístico</button>
+  <button data-tab="reporte">Reporte por peaje</button>
+  <button data-tab="metodo">Metodología</button>
+</nav>
+<main>
+
+<!-- ============ ESTIMACIÓN ============ -->
+<section id="tab-estimacion" class="seccion">
+  <div class="card">
+    <h2>Estimación de recaudo</h2>
+    <div class="controles">
+      <div class="campo">
+        <label for="filtroPeaje">Buscar peaje</label>
+        <input type="search" id="filtroPeaje" placeholder="Escriba para filtrar…">
+      </div>
+      <div class="campo">
+        <label for="peajeSelect">Peaje</label>
+        <select id="peajeSelect"></select>
+      </div>
+      <div class="campo">
+        <label for="modeloSelect">Modelo</label>
+        <select id="modeloSelect">
+          <option value="ensemble">Ensemble (OLS + Holt-Winters + descomposición + naive)</option>
+          <option value="ols">Tendencia + estacionalidad (OLS en log)</option>
+          <option value="hw">Holt-Winters (aditivo)</option>
+          <option value="decomp">Descomposición clásica (tendencia × estacionalidad)</option>
+          <option value="naive">Naive estacional (promedio del mes)</option>
+        </select>
+      </div>
+      <div class="campo" style="max-width:220px">
+        <label for="horizonte">Horizonte: <span id="horizonteVal">12</span> meses</label>
+        <input type="range" id="horizonte" min="1" max="24" value="12">
+      </div>
+    </div>
+    <div class="controles" style="margin-top:8px">
+      <label class="check"><input type="checkbox" id="chkIC" checked> Intervalo de confianza 95%</label>
+      <label class="check"><input type="checkbox" id="chkCOVID"> Excluir COVID (abr–may 2020) del entrenamiento</label>
+      <label class="check"><input type="checkbox" id="chkTodo" checked> Pronóstico futuro entrenado con todo el historial (2014–2026)</label>
+      <label class="check"><input type="checkbox" id="chkTest" checked> Mostrar predicción en periodo de prueba</label>
+      <button class="btn sec" id="btnTotal">Ver total nacional</button>
+      <button class="btn sec" id="btnPeaje" style="display:none">Volver al peaje</button>
+    </div>
+    <div id="avisoPeaje"></div>
+  </div>
+
+  <div class="grid g4" id="kpis" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))"></div>
+
+  <div class="card">
+    <h2 id="tituloGrafico">Serie histórica y pronóstico</h2>
+    <div class="legend">
+      <span><span class="sw" style="background:#1b4f72"></span> Real (entrenamiento 2014–2023)</span>
+      <span><span class="sw" style="background:#0e9f6e"></span> Real (prueba 2024–2026)</span>
+      <span><span class="sw" style="background:#f59e0b"></span> Predicción en prueba (modelo entrenado 2014–2023)</span>
+      <span><span class="sw" style="background:#7c3aed"></span> Pronóstico futuro</span>
+      <span><span class="sw" style="background:#c4b5fd"></span> IC 95% del pronóstico</span>
+    </div>
+    <div class="grafico" id="graficoPrincipal" style="position:relative"></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <h2>Tabla de pronóstico</h2>
+      <div class="tabla-wrap" style="max-height:420px">
+        <table id="tablaPronostico"><thead><tr>
+          <th>Mes</th><th>Pronóstico</th><th>IC inf.</th><th>IC sup.</th><th>Real</th><th>Error %</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+      <p style="font-size:12px;color:var(--suave)">La columna “Real” y “Error %” solo aplica al periodo de prueba (2024–2026). El pronóstico futuro se calcula desde 2026-06.</p>
+    </div>
+    <div class="card">
+      <h2>Comparación de modelos (prueba 2024–2026)</h2>
+      <div class="tabla-wrap" style="max-height:420px">
+        <table id="tablaModelos"><thead><tr>
+          <th>Modelo</th><th>MAE</th><th>RMSE</th><th>WAPE</th><th>MAPE</th><th>sMAPE</th><th>MASE</th><th>Sesgo</th><th>R²</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+      <p style="font-size:12px;color:var(--suave)">Métricas calculadas entrenando solo con 2014–2023 y evaluando en 2024–2026. <b>WAPE</b> (error absoluto ponderado) es la métrica de referencia por ser robusta ante meses de cierre con recaudo ≈ 0; <b>MAPE</b> se calcula solo sobre meses con recaudo representativo (≥ 5% del promedio). <b>MASE</b> &lt; 1 indica mejora sobre el modelo naive.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESUMEN ============ -->
+<section id="tab-resumen" class="seccion" style="display:none">
+  <div class="grid g4" id="kpisGlobal"></div>
+  <div class="grid g2">
+    <div class="card">
+      <h2>Total nacional por año (millones de pesos)</h2>
+      <div class="grafico" id="graficoAnual"></div>
+    </div>
+    <div class="card">
+      <h2>Estacionalidad global (promedio por mes)</h2>
+      <div class="grafico" id="graficoEstacional"></div>
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="card">
+      <h2>Top 15 peajes por recaudo total</h2>
+      <div class="grafico" id="graficoTop"></div>
+    </div>
+    <div class="card">
+      <h2>Calidad de los datos</h2>
+      <div id="calidadDatos"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Resumen estadístico por peaje</h2>
+    <div class="controles" style="margin-bottom:10px">
+      <div class="campo" style="max-width:320px">
+        <label for="filtroStats">Filtrar peajes</label>
+        <input type="search" id="filtroStats" placeholder="Nombre o estado…">
+      </div>
+      <button class="btn sec" id="btnCSVStats">Descargar CSV</button>
+    </div>
+    <div class="tabla-wrap">
+      <table id="tablaStats"><thead><tr>
+        <th data-k="nombre">Peaje</th><th data-k="estado">Estado</th><th data-k="n_meses">Meses</th>
+        <th data-k="total">Total</th><th data-k="promedio">Prom. mensual</th><th data-k="mediana">Mediana</th>
+        <th data-k="de">Desv. est.</th><th data-k="cv">CV</th><th data-k="cagr">CAGR</th>
+        <th data-k="pico">Mes pico</th><th data-k="valle">Mes valle</th><th data-k="pctCeros">% ceros</th>
+        <th data-k="wape">WAPE prueba</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+    <p style="font-size:12px;color:var(--suave)">Haga clic en un encabezado para ordenar y en una fila para ver ese peaje en la pestaña Estimación. CAGR = crecimiento anual compuesto entre el primer y último año completo. <b>WAPE</b> = error absoluto ponderado del ensemble en el periodo de prueba 2024–2026 (entrenado solo con 2014–2023); es la métrica de calidad del pronóstico por peaje.</p>
+  </div>
+</section>
+
+<!-- ============ REPORTE ============ -->
+<section id="tab-reporte" class="seccion" style="display:none">
+  <div class="card no-print">
+    <h2>Reporte de análisis por peaje</h2>
+    <div class="controles">
+      <div class="campo">
+        <label for="reporteSelect">Peaje a analizar</label>
+        <select id="reporteSelect"></select>
+      </div>
+      <div class="campo">
+        <label for="reporteModelo">Modelo del reporte</label>
+        <select id="reporteModelo">
+          <option value="ensemble">Ensemble</option>
+          <option value="ols">Tendencia + estacionalidad (OLS)</option>
+          <option value="hw">Holt-Winters</option>
+          <option value="decomp">Descomposición clásica</option>
+          <option value="naive">Naive estacional</option>
+        </select>
+      </div>
+      <button class="btn" id="btnReporte">Generar reporte</button>
+    </div>
+  </div>
+  <div id="reporteContenedor"></div>
+</section>
+
+<!-- ============ METODOLOGÍA ============ -->
+<section id="tab-metodo" class="seccion" style="display:none">
+  <div class="card">
+    <h2>Metodología</h2>
+    <h3>División entrenamiento / prueba</h3>
+    <p>Entrenamiento: <b>primeros 10 años (2014-01 a 2023-12)</b>. Prueba: <b>últimos años (2024-01 a 2026-05)</b>. Todos los modelos se ajustan solo con el periodo de entrenamiento para evaluar; el pronóstico futuro (desde 2026-06) puede reentrenarse con todo el historial si activa la casilla correspondiente.</p>
+    <h3>Limpieza de datos</h3>
+    <ul>
+      <li>Se eliminaron <b id="nDup"></b> registros duplicados exactos (p. ej. TURBACO 2022).</li>
+      <li>Los registros del mismo peaje y mes se sumaron (maneja meses divididos en dos registros).</li>
+      <li>Meses parciales (&lt;28 días): se usa <b>recaudo normalizado</b> a mes de 30.44 días para modelar; los totales usan el valor bruto.</li>
+      <li>Mes faltante (sin registro) ≠ mes en cero (registro con 0). Los ceros se excluyen del ajuste en escala logarítmica.</li>
+      <li>Peajes <b>sin recaudo</b> (todo ceros) y <b>cerrados</b> (último recaudo antes de 2025-11) no se pronostican; se reportan como no evaluables.</li>
+    </ul>
+    <h3>Modelos</h3>
+    <ul>
+      <li><b>OLS tendencia + estacionalidad:</b> log(recaudo) ~ tiempo + variables dummies de mes. Captura crecimiento exponencial y patrón mensual.</li>
+      <li><b>Holt-Winters amortiguado:</b> nivel + tendencia con amortiguamiento (φ) + estacionalidad sobre log(recaudo). La suma amortiguada de la tendencia y el tope de 2.5× la mediana histórica evitan proyecciones explosivas.</li>
+      <li><b>Descomposición clásica:</b> media móvil de 12 meses para la tendencia e índices estacionales multiplicativos.</li>
+      <li><b>Naive estacional:</b> promedio histórico del mismo mes calendario (línea base de referencia).</li>
+      <li><b>Ensemble ponderado:</b> los pesos de cada modelo se calculan por <b>validación rolling-origin</b> sobre los últimos 24 meses del entrenamiento (reentrenando en cada corte y evaluando en el mes siguiente), por lo que <b>no se usa información del periodo de prueba</b>. Se aplica una mezcla 10/90 con el equiponderado para no depender de un único modelo.</li>
+    </ul>
+    <h3>Detección de cambios estructurales</h3>
+    <p>Antes de pronosticar se compara el promedio de los últimos 12 meses con el de los 12 meses anteriores. Si el nivel cambia fuera del rango [0.55, 1.8] y el nuevo nivel se mantiene estable, se considera una ruptura estructural (nueva concesión, tarifario o reubicación) y el modelo se ajusta <b>solo con el régimen reciente</b>. La vista del peaje muestra una alerta cuando esto ocurre.</p>
+    <h3>Métricas</h3>
+    <ul>
+      <li><b>WAPE</b> (error absoluto ponderado por magnitud): métrica de referencia, robusta ante meses de cierre con recaudo ≈ 0.</li>
+      <li><b>MAPE</b>: se calcula solo sobre meses con recaudo representativo (≥ 5% del promedio); los meses de cierre se excluyen porque su error relativo no es interpretable.</li>
+      <li><b>sMAPE</b>: versión simétrica, incluye todos los meses.</li>
+      <li><b>MASE</b>: error escalado por el error naive; valores &lt; 1 indican mejora sobre el naive estacional.</li>
+      <li><b>MAE, RMSE, sesgo y R²</b> sobre el periodo de prueba.</li>
+    </ul>
+    <p>El <b>intervalo de confianza 95%</b> es proporcional al nivel pronosticado: se toma el error relativo del modelo en prueba (WAPE, acotado entre 5% y 120%) y se amplía suavemente con el horizonte: <i>pronóstico ± 1.96·WAPE·(0.75 + 0.25·√h)</i>. A diferencia de usar RMSE·√h, este método mantiene la banda coherente con la escala del recaudo y no colapsa a cero en series con crecimiento.</p>
+    <h3>Limitaciones</h3>
+    <ul>
+      <li>COVID-19 (abr–may 2020) distorsiona el ajuste; use la casilla “Excluir COVID”.</li>
+      <li>Peajes con historia corta (&lt;24 meses) tienen pronósticos poco fiables.</li>
+      <li>Los cambios de nivel no anticipables (tarifas, nuevas concessiones, cierres parciales) degradan cualquier modelo entrenado con datos previos al cambio; por eso se reportan como alerta y se reentrena con el régimen reciente.</li>
+      <li>Cambios de tarifa, cierres o nuevas concesiones no están en los datos y pueden invalidar el pronóstico.</li>
+      <li>RecaudoFSV y RecaudoSobrante se muestran como contexto; el objetivo modelado es <b>Recaudo</b>.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+<footer>Fuente: Recaudo_Vehicular_ANI_20261113.csv (ANI) · Aplicación generada con datos.js · Los valores están en pesos colombianos.</footer>
+<div class="tooltip" id="tooltip"></div>
+
+<script src="datos.js"></script>
+<script>
+"use strict";
+/* ================= Intervalo de confianza ================= */
+// IC 95% basado en el error relativo del modelo en prueba (WAPE), ampliado de forma
+// suave con la raiz del horizonte. Se mantiene proporcional al nivel pronosticado,
+// por lo que no colapsa a cero ni se dispara en series con crecimiento.
+function intervaloConfianza(fut,met,rmse){
+  const wape=(met&&!isNaN(met.wape)&&met.wape>0)?met.wape:(rmse>0?0.20:0.20);
+  const rel=Math.min(Math.max(wape,0.05),1.20);
+  return fut.map((f,i)=>{
+    const h=Math.sqrt(i+1);
+    const factor=1.96*rel*(0.75+0.25*h);
+    return {t:f.t,inf:Math.max(0,f.pred*(1-factor)),sup:f.pred*(1+factor)};
+  });
+}
+/* ================= Utilidades ================= */
+const $=id=>document.getElementById(id);
+const MESES=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+const MESES_L=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const TRAIN_END_T=2023*12+11, TEST_START_T=2024*12+0, FIN_T=2026*12+4;
+function tIdx(y,m){return y*12+(m-1);}
+function ym(t){return {y:Math.floor(t/12), m:t%12+1};}
+function etiqueta(t){const o=ym(t);return MESES[o.m-1]+" "+o.y;}
+function etiquetaCorta(t){const o=ym(t);return o.m+"/"+o.y;}
+function fmtCOP(v){
+  if(v==null||isNaN(v))return "—";
+  const a=Math.abs(v);
+  if(a>=1e12)return "$"+(v/1e12).toFixed(2)+" billones";
+  if(a>=1e9)return "$"+(v/1e9).toFixed(2)+" mil M";
+  if(a>=1e6)return "$"+(v/1e6).toFixed(1)+" M";
+  if(a>=1e3)return "$"+(v/1e3).toFixed(1)+" mil";
+  return "$"+Math.round(v).toLocaleString("es-CO");
+}
+function fmtCOPcorto(v){
+  if(v==null||isNaN(v))return "—";
+  const a=Math.abs(v);
+  if(a>=1e12)return (v/1e12).toFixed(1)+"B";
+  if(a>=1e9)return (v/1e9).toFixed(0)+" milM";
+  if(a>=1e6)return (v/1e6).toFixed(0)+"M";
+  return Math.round(v).toLocaleString("es-CO");
+}
+function fmtNum(v,d){if(v==null||isNaN(v))return "—";return Number(v).toLocaleString("es-CO",{maximumFractionDigits:d==null?2:d});}
+function fmtPct(v,d){if(v==null||isNaN(v))return "—";return (v*100).toFixed(d==null?1:d)+"%";}
+function media(a){if(!a.length)return NaN;return a.reduce((s,x)=>s+x,0)/a.length;}
+function mediana(a){if(!a.length)return NaN;const b=[...a].sort((x,y)=>x-y);const n=b.length;return n%2?b[(n-1)/2]:(b[n/2-1]+b[n/2])/2;}
+function desv(a){if(a.length<2)return 0;const m=media(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1));}
+function corr(xs,ys){const n=xs.length;if(n<3)return NaN;const mx=media(xs),my=media(ys);let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(xs[i]-mx)*(ys[i]-my);sxx+=(xs[i]-mx)**2;syy+=(ys[i]-my)**2;}if(sxx===0||syy===0)return NaN;return sxy/Math.sqrt(sxx*syy);}
+function resolver(A,b){
+  const n=b.length,M=A.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){
+    let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;
+    if(Math.abs(M[p][c])<1e-12)return null;
+    [M[c],M[p]]=[M[p],M[c]];
+    for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c]/M[c][c];for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k];}
+  }
+  return M.map((r,i)=>r[n]/r[i]);
+}
+function descargar(nombre,contenido,tipo){
+  const blob=new Blob([contenido],{type:tipo||"text/plain;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nombre;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+const DATOS=window.DATOS;
+const PEAJES=DATOS.peajes;
+const porNombre={};PEAJES.forEach(p=>porNombre[p.nombre]=p);
+let modoTotal=false;
+
+/* ================= Series y modelos ================= */
+function serieDe(peaje){
+  const arr=peaje.meses.map(x=>({t:tIdx(x.y,x.m),y:x.y,m:x.m,v:x.recaudo_norm,raw:x.recaudo,parcial:x.parcial,faltante:x.faltante}));
+  arr.claveCache="p:"+peaje.nombre;
+  return arr;
+}
+function esCOVID(s){return (s.y===2020&&s.m===4)||(s.y===2020&&s.m===5);}
+function filtrarTrain(serie,excluirCOVID){
+  return serie.filter(s=>s.t<=TRAIN_END_T&&!s.faltante&&s.v!=null&&s.v>0&&(!excluirCOVID||!esCOVID(s)));
+}
+function serieCompleta(serie,t0,t1){
+  const mapa=new Map(serie.map(s=>[s.t,s]));
+  const ts=[];for(let t=t0;t<=t1;t++)ts.push(t);
+  const z=ts.map(t=>{const s=mapa.get(t);return s&&!s.faltante&&s.v!=null?s.v:null;});
+  // interpolación lineal de huecos
+  for(let i=0;i<z.length;i++){
+    if(z[i]==null){
+      let a=i-1;while(a>=0&&z[a]==null)a--;
+      let b=i+1;while(b<z.length&&z[b]==null)b++;
+      if(a>=0&&b<z.length)z[i]=z[a]+(z[b]-z[a])*(i-a)/(b-a);
+      else if(a>=0)z[i]=z[a];else if(b<z.length)z[i]=z[b];else z[i]=0;
+    }
+  }
+  return {ts,z};
+}
+function fitNaive(train){
+  const porMes={};for(let m=1;m<=12;m++)porMes[m]=[];
+  train.forEach(s=>porMes[s.m].push(s.v));
+  const g=media(train.map(s=>s.v));
+  const est={};for(let m=1;m<=12;m++)est[m]=porMes[m].length?media(porMes[m]):g;
+  return {predecir(t){return est[ym(t).m];},nombre:"Naive estacional"};
+}
+function fitOLS(train){
+  if(train.length<30)return null;
+  const X=[],Y=[];
+  train.forEach(s=>{
+    const fila=[1,s.t];for(let m=2;m<=12;m++)fila.push(s.m===m?1:0);
+    X.push(fila);Y.push(Math.log(s.v));
+  });
+  const p=13,n=X.length;
+  const XtX=Array.from({length:p},()=>Array(p).fill(0)),XtY=Array(p).fill(0);
+  for(let i=0;i<n;i++)for(let a=0;a<p;a++){XtY[a]+=X[i][a]*Y[i];for(let b=0;b<p;b++)XtX[a][b]+=X[i][a]*X[i][b];}
+  const beta=resolver(XtX,XtY);if(!beta)return null;
+  let sse=0;for(let i=0;i<n;i++){let pr=0;for(let a=0;a<p;a++)pr+=X[i][a]*beta[a];sse+=(Y[i]-pr)**2;}
+  const varRes=sse/Math.max(1,n-p);
+  return {predecir(t){const o=ym(t);const fila=[1,t];for(let m=2;m<=12;m++)fila.push(o.m===m?1:0);let pr=0;for(let a=0;a<p;a++)pr+=fila[a]*beta[a];return Math.exp(pr+0.5*varRes);},nombre:"OLS tendencia+estacionalidad"};
+}
+function fitHW(serie,t0,t1){
+  // Holt-Winters aditivo con tendencia amortiguada (damped trend) sobre log(recaudo).
+  // El amortiguamiento (phi<1) evita que la proyección de la tendencia diverja.
+  const {ts,z:zRaw}=serieCompleta(serie,t0,t1);
+  const n=zRaw.length;if(n<24)return null;
+  // Trabaja en log solo con los valores positivos; los ceros reales se sustituyen
+  // por la interpolación de la serie completa para no sesgar el ajuste.
+  const z=zRaw.map(v=>Math.log(Math.max(v,1)));
+  const media12=media(z.slice(0,12));
+  const mediaU=media(z.slice(n-12));
+  const b0=(mediaU-media12)/12;
+  const seas0=[];for(let j=0;j<12;j++){const vals=[];for(let k=j;k<n;k+=12)vals.push(z[k]);seas0.push(media(vals)-media(z));}
+  function correr(a,bb,g,phi){
+    let L=media12,B=b0;const S=[...seas0];let sse=0;
+    for(let i=0;i<n;i++){
+      const sIdx=S[i%12];
+      const pred=L+phi*B+sIdx;
+      sse+=(z[i]-pred)**2;
+      const L2=a*(z[i]-sIdx)+(1-a)*(L+phi*B);
+      const B2=bb*(L2-L)+(1-bb)*phi*B;
+      S[i%12]=g*(z[i]-L2)+(1-g)*sIdx;
+      L=L2;B=B2;
+    }
+    return {sse,L,B,S};
+  }
+  let mejor=null;
+  for(const a of [0.2,0.5,0.8])for(const bb of [0.2,0.5,0.8])for(const g of [0.2,0.5,0.8])for(const phi of [0.8,0.9,0.98]){
+    const r=correr(a,bb,g,phi);
+    if(!mejor||r.sse<mejor.sse)mejor={...r,a,bb,g,phi};
+  }
+  const {L,B,S,phi}=mejor;
+  // Acota la tendencia log: |crecimiento mensual| <= 3%.
+  const bClamp=Math.max(-0.03,Math.min(0.03,B));
+  // Tope del pronóstico: 2.5x la mediana histórica positiva (robusto ante picos aislados).
+  const positivos=zRaw.filter(v=>v>0).sort((a,b)=>a-b);
+  const medPos=positivos.length?positivos[Math.floor(positivos.length/2)]:1;
+  const cap=medPos*2.5;
+  return {predecir(t){
+      const h=t-t1;const idx=((n-1+h)%12+12)%12;
+      // Suma amortiguada de la tendencia: B*(1-phi^h)/(1-phi)
+      const damp=phi===1?h*bClamp:(bClamp*(1-Math.pow(phi,h))/(1-phi));
+      const val=Math.exp(L+damp+S[idx]);
+      return Math.max(0,Math.min(cap,val));
+    },nombre:"Holt-Winters (log, amortiguado)"};
+}
+function fitDecomp(serie,t0,t1){
+  const {ts,z}=serieCompleta(serie,t0,t1);
+  const n=z.length;if(n<24)return null;
+  const trend=new Array(n).fill(null);
+  for(let i=6;i<n-6;i++){
+    let s=0;for(let k=i-6;k<=i+6;k++)s+=z[k];
+    trend[i]=s/12;
+  }
+  const idxMes={};for(let m=1;m<=12;m++)idxMes[m]=[];
+  for(let i=0;i<n;i++)if(trend[i]!=null&&trend[i]>0)idxMes[ym(ts[i]).m].push(z[i]/trend[i]);
+  const gIdx=media(Object.values(idxMes).flat());
+  const seas={};for(let m=1;m<=12;m++)seas[m]=idxMes[m].length?media(idxMes[m]):gIdx;
+  const xs=[],ys=[];
+  for(let i=0;i<n;i++)if(trend[i]!=null){xs.push(ts[i]);ys.push(z[i]/seas[ym(ts[i]).m]);}
+  if(xs.length<12)return null;
+  const mx=media(xs),my=media(ys);
+  let sxy=0,sxx=0;for(let i=0;i<xs.length;i++){sxy+=(xs[i]-mx)*(ys[i]-my);sxx+=(xs[i]-mx)**2;}
+  const slope=sxx?sxy/sxx:0,inter=my-slope*mx;
+  return {predecir(t){return Math.max(0,(inter+slope*t)*seas[ym(t).m]);},nombre:"Descomposición clásica"};
+}
+function detectarRuptura(serie){
+  // Busca un cambio estructural de nivel comparando, para cada año reciente, el
+  // promedio de 12 meses contra el de los 12 meses anteriores. Los meses con
+  // recaudo 0 (cierres parciales) se INCLUYEN: son parte real de la operación.
+  const val=serie.filter(s=>!s.faltante&&s.v!=null&&s.v>=0);
+  if(val.length<30)return null;
+  const tMax=Math.max(...val.map(s=>s.t));
+  for(const off of [0,6,12,18,24,36]){
+    const fin=tMax-off;
+    const recientes=val.filter(s=>s.t>fin-12&&s.t<=fin).map(s=>s.v);
+    const previos=val.filter(s=>s.t>fin-24&&s.t<=fin-12).map(s=>s.v);
+    if(recientes.length<9||previos.length<9)continue;
+    const mR=media(recientes),mP=media(previos);
+    if(mP<=0)continue;
+    const ratio=mR/mP;
+    if(ratio<0.55||ratio>1.8){
+      // Verifica que el régimen nuevo se mantiene: los últimos 6 meses ~ mismo nivel
+      const ult6=val.filter(s=>s.t>tMax-6).map(s=>s.v);
+      if(ult6.length<4)continue;
+      const ratio6=media(ult6)/mR;
+      if(ratio6>0.7&&ratio6<1.4)return {ratio,tInicio:fin-11,off};
+    }
+  }
+  return null;
+}
+// Compara el nivel medio del periodo de prueba con el de entrenamiento
+function compararNiveles(serie){
+  const tr=serie.filter(s=>s.t<=TRAIN_END_T&&!s.faltante&&s.v!=null&&s.v>0).map(s=>s.v);
+  const te=serie.filter(s=>s.t>=TEST_START_T&&!s.faltante&&s.v!=null&&s.v>0).map(s=>s.v);
+  if(tr.length<12||te.length<6)return null;
+  const mt=media(tr),me=media(te);
+  if(mt<=0)return null;
+  return {ratio:me/mt,ratioTrain:mt,ratioTest:me};
+}
+const CACHE_MODELOS=new Map();
+function construirModelos(serie,excluirCOVID,usarTodo,claveCache){
+  if(claveCache&&CACHE_MODELOS.has(claveCache))return CACHE_MODELOS.get(claveCache);
+  const t1=usarTodo?FIN_T:TRAIN_END_T;
+  // Cuando se reentrena con todo el historial, si hay una ruptura estructural se
+  // ajusta solo con el régimen reciente (el anterior ya no describe la operación actual).
+  let t0min=-Infinity,ruptura=null;
+  if(usarTodo){
+    ruptura=detectarRuptura(serie);
+    if(ruptura)t0min=ruptura.tInicio;
+  }
+  const train=serie.filter(s=>s.t<=t1&&s.t>=t0min&&!s.faltante&&s.v!=null&&s.v>0&&(!excluirCOVID||!esCOVID(s)));
+  const t0=train.length?train[0].t:0;
+  const modelos={};
+  const naive=fitNaive(train);if(naive)modelos.naive=naive;
+  const ols=fitOLS(train);if(ols)modelos.ols=ols;
+  const hw=fitHW(serie,t0,t1);if(hw)modelos.hw=hw;
+  const dec=fitDecomp(serie,t0,t1);if(dec)modelos.decomp=dec;
+  const partes=Object.values(modelos);
+  // Ensemble: promedio simple. Los pesos por desempeño se calculan aparte (ver pesosEnsemble).
+  modelos.ensemble={predecir(t){return media(partes.map(m=>m.predecir(t)));},nombre:"Ensemble"};
+  if(claveCache)CACHE_MODELOS.set(claveCache,modelos);
+  return modelos;
+}
+function metricas(actual,pred,base){
+  const pares=actual.map((a,i)=>({a,p:pred[i]})).filter(o=>o.a!=null&&!isNaN(o.a)&&o.p!=null&&!isNaN(o.p));
+  if(!pares.length)return {mae:NaN,rmse:NaN,mape:NaN,smape:NaN,wape:NaN,mase:NaN,sesgo:NaN,r2:NaN,n:0,nPos:0};
+  const mae=media(pares.map(o=>Math.abs(o.p-o.a)));
+  const rmse=Math.sqrt(media(pares.map(o=>(o.p-o.a)**2)));
+  const sumaA=pares.reduce((s,o)=>s+Math.abs(o.a),0);
+  // WAPE: error ponderado por magnitud (robusto ante reales cercanos a 0)
+  const wape=sumaA>0?pares.reduce((s,o)=>s+Math.abs(o.p-o.a),0)/sumaA:NaN;
+  // MAPE sobre meses "representativos": excluye meses anómalos cuyo real es <5% del promedio
+  // (meses de cierre con valor ~0, donde el error relativo no es interpretable).
+  const promReal=media(pares.map(o=>Math.abs(o.a)));
+  const umbral=promReal*0.05;
+  const rep=pares.filter(o=>Math.abs(o.a)>=umbral&&Math.abs(o.a)>0);
+  const mape=rep.length?media(rep.map(o=>Math.abs(o.p-o.a)/Math.abs(o.a))):NaN;
+  const smape=media(pares.map(o=>2*Math.abs(o.p-o.a)/(Math.abs(o.a)+Math.abs(o.p)+1e-9)));
+  const mapePos=pares.filter(o=>o.a>0).length?media(pares.filter(o=>o.a>0).map(o=>Math.abs(o.p-o.a)/o.a)):NaN;
+  // MASE: error escalado por el benchmark naive estacional (mismo mes de años previos).
+  // Es la escala apropiada para series con estacionalidad anual y tendencia.
+  let mase=NaN;
+  if(base&&base.length>=13){
+    const errs=[];
+    for(let i=12;i<base.length;i++){
+      const ref=base.filter((s,j)=>j<i&&s.m===base[i].m).map(s=>s.v);
+      if(ref.length)errs.push(Math.abs(base[i].v-media(ref)));
+    }
+    const e0=errs.length?media(errs):NaN;
+    if(e0>0)mase=mae/e0;
+  }
+  const sesgo=media(pares.map(o=>o.p-o.a));
+  const ma=media(pares.map(o=>o.a));
+  const sst=pares.reduce((s,o)=>s+(o.a-ma)**2,0),sse=pares.reduce((s,o)=>s+(o.p-o.a)**2,0);
+  const r2=sst>0?1-sse/sst:NaN;
+  return {mae,rmse,mape,mapePos,smape,wape,mase,sesgo,r2,n:pares.length,nPos:rep.length};
+}
+/* ---- Validación rolling-origin: elige los pesos del ensemble SIN usar el conjunto de prueba ---- */
+function validacionRolling(serie,excluirCOVID){
+  // Rolling-origin sobre los últimos 12 meses del entrenamiento: reentrena con corte
+  // en TRAIN_END_T-h+1 y evalúa ese mes. NO usa el periodo de prueba.
+  const positivos=serie.filter(s=>s.t<=TRAIN_END_T&&!s.faltante&&s.v!=null&&s.v>0&&(!excluirCOVID||!esCOVID(s)));
+  if(positivos.length<48)return null;
+  const cortes=[];
+  for(let h=1;h<=24;h++){
+    const objetivo=TRAIN_END_T-h+1;   // mes que se va a predecir
+    const corte=objetivo-1;           // último mes usado para entrenar (NUNCA el objetivo)
+    const sub=serie.filter(s=>s.t<=corte);
+    if(sub.filter(s=>!s.faltante&&s.v!=null&&s.v>0).length<36)continue;
+    cortes.push({corte,objetivo});
+  }
+  if(cortes.length<6)return null;
+  const absErr={},absReal={};let n=0;
+  for(const c of cortes){
+    const sub=serie.filter(s=>s.t<=c.corte);
+    const train=sub.filter(s=>!s.faltante&&s.v!=null&&s.v>0&&(!excluirCOVID||!esCOVID(s)));
+    if(train.length<36)continue;
+    const t0=train[0].t;
+    const mdl={};
+    const nv=fitNaive(train);if(nv)mdl.naive=nv;
+    const ol=fitOLS(train);if(ol)mdl.ols=ol;
+    const hw=fitHW(sub,t0,c.corte);if(hw)mdl.hw=hw;
+    const dc=fitDecomp(sub,t0,c.corte);if(dc)mdl.decomp=dc;
+    const claves=Object.keys(mdl);if(!claves.length)continue;
+    const actual=serie.find(s=>s.t===c.objetivo);
+    if(!actual||actual.faltante||actual.v==null)continue;
+    for(const k of claves){
+      const p=mdl[k].predecir(c.objetivo);
+      (absErr[k]=absErr[k]||[]).push(Math.abs(p-actual.v));
+    }
+    (absReal.total=absReal.total||[]).push(Math.abs(actual.v));
+    n++;
+  }
+  if(!n)return null;
+  const sumaReal=absReal.total.reduce((a,b)=>a+b,0);
+  const score={};for(const k of Object.keys(absErr))score[k]=sumaReal>0?absErr[k].reduce((a,b)=>a+b,0)/sumaReal:NaN;
+  return {score,n};
+}
+const CACHE_PESOS=new Map();
+function pesosEnsemble(serie,excluirCOVID,clave){
+  if(clave&&CACHE_PESOS.has(clave))return CACHE_PESOS.get(clave);
+  const val=validacionRolling(serie,excluirCOVID);
+  let pesos=null;
+  if(val){
+    const ks=Object.keys(val.score).filter(k=>isFinite(val.score[k]));
+    if(ks.length){
+      // Softmax sobre el WAPE de validación (temperatura 0.05): si un modelo es
+      // claramente mejor, concentra el peso; si todos son similares, se reparten.
+      const mejor=Math.min(...ks.map(k=>val.score[k]));
+      const w={};for(const k of ks)w[k]=Math.exp(-(val.score[k]-mejor)/0.05);
+      const s=Object.values(w).reduce((a,b)=>a+b,0);
+      if(s>0){
+        const norm=Object.fromEntries(Object.entries(w).map(([k,v])=>[k,v/s]));
+        // Mezcla con equiponderado (10%) para robustez ante ruido en la validación,
+        // sin diluir demasiado el modelo que la validación identifica como mejor.
+        const equip=1/ks.length;
+        const final=Object.fromEntries(ks.map(k=>[k,0.90*norm[k]+0.10*equip]));
+        pesos={pesos:final,validacion:val};
+      }
+    }
+  }
+  if(clave)CACHE_PESOS.set(clave,pesos);
+  return pesos;
+}
+const CACHE_EVAL=new Map();
+function evaluar(serie,excluirCOVID,claveCache){
+  if(claveCache&&CACHE_EVAL.has(claveCache))return CACHE_EVAL.get(claveCache);
+  const modelos=construirModelos(serie,excluirCOVID,false,claveCache?claveCache+"|m":null);
+  const testTs=[];for(let t=TEST_START_T;t<=FIN_T;t++)testTs.push(t);
+  const mapa=new Map(serie.map(s=>[s.t,s]));
+  const actual=testTs.map(t=>{const s=mapa.get(t);return s&&!s.faltante?s.v:null;});
+  const base=serie.filter(s=>s.t<=TRAIN_END_T&&!s.faltante&&s.v!=null&&s.v>0);
+  const res={};
+  for(const k of Object.keys(modelos)){
+    const pred=testTs.map(t=>modelos[k].predecir(t));
+    res[k]={...metricas(actual,pred,base),pred};
+  }
+  // Ensemble ponderado por desempeño en validación (no usa el periodo de prueba)
+  const pe=pesosEnsemble(serie,excluirCOVID,claveCache?claveCache+"|w":null);
+  if(pe&&Object.keys(pe.pesos).length){
+    const claves=Object.keys(pe.pesos).filter(k=>modelos[k]);
+    if(claves.length){
+      const pred=testTs.map(t=>claves.reduce((s,k)=>s+modelos[k].predecir(t)*pe.pesos[k],0));
+      res.ensemble={...metricas(actual,pred,base),pred,pesos:pe.pesos,validacion:pe.validacion};
+    }
+  }
+  const out={modelos,res,testTs,actual,pesosEnsemble:pe};
+  if(claveCache)CACHE_EVAL.set(claveCache,out);
+  return out;
+}
+function pronosticoFuturo(serie,modeloKey,excluirCOVID,usarTodo,horizonte){
+  const cc=(serie.claveCache||"x")+(excluirCOVID?"-c":"")+(usarTodo?"-todo":"-tr");
+  const modelos=construirModelos(serie,excluirCOVID,usarTodo,cc);
+  const out=[];
+  if(modeloKey==="ensemble"&&!usarTodo){
+    // usa los pesos de validación ya calculados (mismo ajuste que en prueba)
+    const pe=pesosEnsemble(serie,excluirCOVID,(serie.claveCache||"x")+(excluirCOVID?"-c":"")+"-e|w");
+    const claves=pe?Object.keys(pe.pesos).filter(k=>modelos[k]):[];
+    for(let h=1;h<=horizonte;h++){
+      const t=FIN_T+h;
+      const p=claves.length?claves.reduce((s,k)=>s+modelos[k].predecir(t)*pe.pesos[k],0):modelos.ensemble.predecir(t);
+      out.push({t,pred:Math.max(0,p)});
+    }
+    return out;
+  }
+  const mod=modelos[modeloKey]||modelos.ensemble;
+  for(let h=1;h<=horizonte;h++){
+    const t=FIN_T+h;
+    out.push({t,pred:mod.predecir(t)});
+  }
+  return out;
+}
+
+/* ================= Estadística por peaje ================= */
+function statsPeaje(peaje){
+  const meses=peaje.meses;
+  const conVal=meses.filter(x=>x.recaudo!=null);
+  const raw=conVal.map(x=>x.recaudo);
+  const norm=conVal.map(x=>x.recaudo_norm);
+  const pos=norm.filter(v=>v>0);
+  const total=raw.reduce((s,x)=>s+x,0);
+  const fsv=conVal.reduce((s,x)=>s+(x.fsv||0),0);
+  const sob=conVal.reduce((s,x)=>s+(x.sobrante||0),0);
+  const prom=pos.length?media(pos):NaN, med=mediana(pos), de=desv(pos);
+  const mn=pos.length?Math.min(...pos):NaN, mx=pos.length?Math.max(...pos):NaN;
+  const p25=pos.length?[...pos].sort((a,b)=>a-b)[Math.floor(pos.length*0.25)]:NaN;
+  const p75=pos.length?[...pos].sort((a,b)=>a-b)[Math.floor(pos.length*0.75)]:NaN;
+  // estacionalidad
+  const porMes={};for(let m=1;m<=12;m++)porMes[m]=[];
+  conVal.forEach(x=>{if(x.recaudo_norm>0)porMes[x.m].push(x.recaudo_norm);});
+  const promMes={};for(let m=1;m<=12;m++)promMes[m]=porMes[m].length?media(porMes[m]):NaN;
+  let pico=NaN,valle=NaN;for(let m=1;m<=12;m++){if(!isNaN(promMes[m])){if(isNaN(pico)||promMes[m]>promMes[pico])pico=m;if(isNaN(valle)||promMes[m]<promMes[valle])valle=m;}}
+  // CAGR primer vs último año completo con datos
+  const porAnio={};
+  conVal.forEach(x=>{if(x.recaudo_norm>0){(porAnio[x.y]=porAnio[x.y]||[]).push(x.recaudo_norm);}});
+  const anios=Object.keys(porAnio).map(Number).filter(y=>porAnio[y].length>=10).sort((a,b)=>a-b);
+  let cagr=NaN;
+  if(anios.length>=2){
+    const a0=media(porAnio[anios[0]]),a1=media(porAnio[anios[anios.length-1]]);
+    const nA=anios[anios.length-1]-anios[0];
+    if(a0>0&&nA>0)cagr=Math.pow(a1/a0,1/nA)-1;
+  }
+  // correlación tendencia
+  const xs=conVal.filter(x=>x.recaudo_norm>0).map(x=>tIdx(x.y,x.m));
+  const ys=conVal.filter(x=>x.recaudo_norm>0).map(x=>Math.log(x.recaudo_norm));
+  const rT=corr(xs,ys);
+  // COVID
+  const covid=conVal.find(x=>x.y===2020&&x.m===4);
+  const base2019=conVal.filter(x=>x.y===2019&&(x.m===4||x.m===5)).map(x=>x.recaudo_norm);
+  const covidDip=(covid&&base2019.length)?covid.recaudo_norm/media(base2019):NaN;
+  return {total,prom,med,de,mn,mx,p25,p75,cv:prom?de/prom:NaN,cagr,pico,valle,promMes,rT,covidDip,fsv,sob,
+    pctCeros:conVal.length?conVal.filter(x=>x.recaudo===0).length/conVal.length:NaN,
+    pctParcial:conVal.length?conVal.filter(x=>x.parcial).length/conVal.length:NaN,
+    nPos:pos.length};
+}
+const STATS={};PEAJES.forEach(p=>STATS[p.nombre]=statsPeaje(p));
+const TOTAL_NACIONAL=PEAJES.reduce((s,p)=>s+STATS[p.nombre].total,0);
+PEAJES.forEach(p=>{STATS[p.nombre].participacion=TOTAL_NACIONAL?STATS[p.nombre].total/TOTAL_NACIONAL:0;});
+
+/* ================= Gráficos SVG ================= */
+function ejesSVG(w,h,pad){
+  return {x0:pad.l,y0:pad.t,x1:w-pad.r,y1:h-pad.b};
+}
+function dibujarSerie(el,opts){
+  const W=opts.w||980,H=opts.h||360,pad={l:64,r:14,t:14,b:34};
+  const {x0,y0,x1,y1}=ejesSVG(W,H,pad);
+  const tMin=opts.tMin,tMax=opts.tMax;
+  const yMax=opts.yMax;
+  const X=t=>x0+(t-tMin)/(tMax-tMin)*(x1-x0);
+  const Y=v=>y1-(v/yMax)*(y1-y0);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">`;
+  // grid horizontal
+  for(let i=0;i<=4;i++){
+    const v=yMax*i/4,y=Y(v);
+    s+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#e8edf3"/><text x="${x0-6}" y="${y+4}" text-anchor="end" font-size="11" fill="#5b6b7f">${fmtCOPcorto(v)}</text>`;
+  }
+  // eje x años
+  for(let t=tMin;t<=tMax;t++){
+    const o=ym(t);
+    if(o.m===1)s+=`<text x="${X(t)}" y="${y1+18}" text-anchor="middle" font-size="11" fill="#5b6b7f">${o.y}</text>`;
+  }
+  s+=`<line x1="${x0}" y1="${y1}" x2="${x1}" y2="${y1}" stroke="#cbd5e1"/>`;
+  // línea split
+  if(TEST_START_T>=tMin&&TEST_START_T<=tMax){
+    s+=`<line x1="${X(TEST_START_T)}" y1="${y0}" x2="${X(TEST_START_T)}" y2="${y1}" stroke="#94a3b8" stroke-dasharray="4 3"/><text x="${X(TEST_START_T)+4}" y="${y0+12}" font-size="11" fill="#64748b">Prueba →</text>`;
+  }
+  // banda IC
+  if(opts.banda&&opts.banda.length){
+    const pts=opts.banda.map(p=>[X(p.t),Y(p.sup)]).concat([...opts.banda].reverse().map(p=>[X(p.t),Y(p.inf)]));
+    s+=`<polygon points="${pts.map(p=>p.join(",")).join(" ")}" fill="#c4b5fd" opacity="0.45"/>`;
+  }
+  function linea(pts,color,dash,w){
+    if(pts.length<2)return "";
+    const d=pts.map((p,i)=>(i?"L":"M")+X(p.t).toFixed(1)+" "+Y(p.v).toFixed(1)).join(" ");
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${w||2}" ${dash?'stroke-dasharray="5 3"':""}/>`;
+  }
+  if(opts.train)s+=linea(opts.train,"#1b4f72",false,2);
+  if(opts.test)s+=linea(opts.test,"#0e9f6e",false,2);
+  if(opts.predTest)s+=linea(opts.predTest,"#f59e0b",true,2);
+  if(opts.futuro)s+=linea(opts.futuro,"#7c3aed",false,2.5);
+  // puntos hover (invisibles, para tooltip)
+  const todos=[...(opts.train||[]),...(opts.test||[]),...(opts.predTest||[]),...(opts.futuro||[])];
+  todos.forEach(p=>{
+    s+=`<circle cx="${X(p.t)}" cy="${Y(p.v)}" r="10" fill="transparent" data-t="${p.t}" data-v="${p.v}" data-k="${p.k||""}"/>`;
+  });
+  s+=`</svg>`;
+  el.innerHTML=s;
+  const tip=$("tooltip");
+  el.querySelectorAll("circle").forEach(c=>{
+    c.addEventListener("mouseenter",e=>{
+      const t=+c.dataset.t,v=+c.dataset.v,k=c.dataset.k;
+      tip.style.display="block";
+      tip.innerHTML=`<b>${etiqueta(t)}</b><br>${k?k+"<br>":""}${fmtCOP(v)}`;
+    });
+    c.addEventListener("mousemove",e=>{
+      const r=el.getBoundingClientRect();
+      tip.style.left=(e.clientX-r.left+12)+"px";tip.style.top=(e.clientY-r.top+12)+"px";
+    });
+    c.addEventListener("mouseleave",()=>tip.style.display="none");
+  });
+}
+function dibujarBarras(el,labels,valores,color,formato){
+  const W=980,H=300,pad={l:64,r:14,t:14,b:40};
+  const {x0,y0,x1,y1}=ejesSVG(W,H,pad);
+  const mx=Math.max(...valores)*1.1||1;
+  const bw=(x1-x0)/valores.length;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+  for(let i=0;i<=4;i++){const v=mx*i/4,y=y1-(v/mx)*(y1-y0);s+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#e8edf3"/><text x="${x0-6}" y="${y+4}" text-anchor="end" font-size="11" fill="#5b6b7f">${formato(v)}</text>`;}
+  valores.forEach((v,i)=>{
+    const x=x0+i*bw+3,w=bw-6,h=(v/mx)*(y1-y0);
+    s+=`<rect x="${x}" y="${y1-h}" width="${w}" height="${h}" rx="3" fill="${color}"><title>${labels[i]}: ${formato(v)}</title></rect><text x="${x+w/2}" y="${y1+16}" text-anchor="middle" font-size="11" fill="#5b6b7f">${labels[i]}</text>`;
+  });
+  s+=`</svg>`;el.innerHTML=s;
+}
+function dibujarBarrasH(el,labels,valores,color,formato){
+  const W=980,H=Math.max(220,labels.length*26+40),pad={l:150,r:90,t:10,b:10};
+  const {x0,y0,x1,y1}=ejesSVG(W,H,pad);
+  const mx=Math.max(...valores)*1.05||1;
+  const bh=(y1-y0)/valores.length;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%">`;
+  valores.forEach((v,i)=>{
+    const y=y0+i*bh+3,h=bh-6,w=(v/mx)*(x1-x0);
+    s+=`<text x="${x0-8}" y="${y+h/2+4}" text-anchor="end" font-size="12" fill="#1a2b3c">${labels[i]}</text><rect x="${x0}" y="${y}" width="${w}" height="${h}" rx="3" fill="${color}"><title>${labels[i]}: ${formato(v)}</title></rect><text x="${x0+w+6}" y="${y+h/2+4}" font-size="11" fill="#5b6b7f">${formato(v)}</text>`;
+  });
+  s+=`</svg>`;el.innerHTML=s;
+}
+
+/* ================= Estimación (UI) ================= */
+function poblarSelects(){
+  const sel=$("peajeSelect"),rep=$("reporteSelect");
+  const grupos=[["activo","Activos"],["cerrado","Cerrados (sin pronóstico)"],["sin_recaudo","Sin recaudo registrado"]];
+  grupos.forEach(([est,lab])=>{
+    const og=document.createElement("optgroup");og.label=lab;
+    PEAJES.filter(p=>p.estado===est).forEach(p=>{const o=document.createElement("option");o.value=p.nombre;o.textContent=p.nombre;og.appendChild(o);});
+    sel.appendChild(og);
+    const og2=og.cloneNode(true);rep.appendChild(og2);
+  });
+  sel.value="ANDES";rep.value="ANDES";
+  $("filtroPeaje").addEventListener("input",e=>{
+    const q=e.target.value.toLowerCase();
+    sel.querySelectorAll("option").forEach(o=>{o.style.display=!q||o.value.toLowerCase().includes(q)?"":"none";});
+  });
+}
+function kpiHTML(et,vl,sb){return `<div class="kpi"><div class="et">${et}</div><div class="vl">${vl}</div><div class="sb">${sb}</div></div>`;}
+function actualizarEstimacion(){
+  const modeloKey=$("modeloSelect").value;
+  const H=+$("horizonte").value;
+  $("horizonteVal").textContent=H;
+  const excluirCOVID=$("chkCOVID").checked;
+  const usarTodo=$("chkTodo").checked;
+  const mostrarIC=$("chkIC").checked;
+  const mostrarTest=$("chkTest").checked;
+  // (KPIs dinámicos)
+  const aviso=$("avisoPeaje");aviso.innerHTML="";
+
+  if(modoTotal){
+    $("tituloGrafico").textContent="Total nacional — serie histórica y pronóstico (suma de peajes activos)";
+    const serieTotal=DATOS.total_mensual.map(x=>({t:tIdx(x.y,x.m),y:x.y,m:x.m,v:x.recaudo,raw:x.recaudo,parcial:false,faltante:false}));
+    serieTotal.claveCache="total";
+    const ev=evaluar(serieTotal,excluirCOVID,excluirCOVID?"total-c":"total");
+    const met=ev.res[modeloKey]||ev.res.ensemble;
+    const fut=pronosticoFuturo(serieTotal,modeloKey,excluirCOVID,usarTodo,H);
+    const rmse=isNaN(met.rmse)?media(serieTotal.filter(s=>s.v>0).map(s=>s.v))*0.1:met.rmse;
+    const banda=mostrarIC?intervaloConfianza(fut,met,rmse):null;
+    const train=serieTotal.filter(s=>s.t<=TRAIN_END_T).map(s=>({t:s.t,v:s.v,k:"Real"}));
+    const test=serieTotal.filter(s=>s.t>=TEST_START_T).map(s=>({t:s.t,v:s.v,k:"Real"}));
+    const predTest=mostrarTest?ev.testTs.map((t,i)=>({t,v:met.pred[i],k:"Predicción prueba"})):null;
+    const futuro=fut.map(f=>({t:f.t,v:f.pred,k:"Pronóstico"}));
+    const yMax=Math.max(...[...train,...test,...futuro].map(p=>p.v))*1.15;
+    dibujarSerie($("graficoPrincipal"),{tMin:2014*12,tMax:FIN_T+H,yMax,train,test,predTest,futuro,banda});
+    const totalHist=serieTotal.reduce((s,x)=>s+x.v,0);
+    $("kpis").innerHTML=
+      kpiHTML("Total histórico",fmtCOP(totalHist),"2014–2026 · todos los peajes")+
+      kpiHTML("Promedio mensual",fmtCOP(media(serieTotal.map(s=>s.v))),"serie nacional")+
+      kpiHTML("WAPE en prueba",fmtPct(met.wape),"2024–2026 · "+(met.nombre||""))+
+      kpiHTML("Pronóstico mes 12",fmtCOP(fut[Math.min(11,fut.length-1)].pred),etiqueta(fut[Math.min(11,fut.length-1)].t))+
+      kpiHTML("Total próximo año",fmtCOP(fut.reduce((s,f)=>s+f.pred,0)),"suma de los "+fut.length+" meses");
+    llenarTablaPronostico(fut,ev,met,rmse,mostrarIC);
+    llenarTablaModelos(ev.res);
+    return;
+  }
+
+  const nombre=$("peajeSelect").value;
+  const peaje=porNombre[nombre];
+  const st=STATS[nombre];
+  $("tituloGrafico").textContent="Peaje "+nombre+" — serie histórica y pronóstico";
+  if(peaje.estado==="sin_recaudo"){
+    aviso.innerHTML=`<div class="aviso"><b>Sin recaudo registrado:</b> este peaje solo tiene registros en cero. No es posible estimar su recaudo. Se muestran sus estadísticas en la pestaña Resumen.</div>`;
+    dibujarSerie($("graficoPrincipal"),{tMin:2014*12,tMax:FIN_T,yMax:1,train:[],test:[],predTest:null,futuro:null,banda:null});
+    $("kpis").innerHTML=kpiHTML("Estado","Sin recaudo","") + kpiHTML("Meses registrados",peaje.n_meses,"") + kpiHTML("Total",fmtCOP(0),"") + kpiHTML("Pronóstico","No disponible","");
+    $("tablaPronostico").querySelector("tbody").innerHTML="<tr><td colspan='6'>Sin pronóstico.</td></tr>";
+    $("tablaModelos").querySelector("tbody").innerHTML="<tr><td colspan='9'>Sin pronóstico.</td></tr>";
+    return;
+  }
+  if(peaje.estado==="cerrado"){
+    aviso.innerHTML=`<div class="aviso"><b>Peaje cerrado:</b> su último recaudo fue antes de 2025-11. No se genera pronóstico futuro (se asume recaudo 0). La evaluación en prueba no aplica.</div>`;
+  }else if(st.nPos<24){
+    aviso.innerHTML=`<div class="info"><b>Historia corta:</b> solo ${st.nPos} meses con recaudo positivo. El pronóstico es orientativo y el modelo usa naive estacional.</div>`;
+  }
+  const serie=serieDe(peaje);
+  const rup=detectarRuptura(serie);
+  if(rup&&peaje.estado==="activo"){
+    const inicio=ym(rup.tInicio);
+    aviso.innerHTML+=`<div class="aviso"><b>Cambio estructural detectado:</b> el nivel de recaudo pasó de ~${fmtPct(rup.ratio,0)} respecto al año previo hacia ${MESES_L[inicio.m-1]} de ${inicio.y} y se mantiene estable. El pronóstico se ajusta usando solo el régimen reciente, por lo que no es comparable con el nivel histórico. Este tipo de cambio (nueva concesión, tarifario o reubicación) no puede anticiparse con el entrenamiento 2014–2023.</div>`;
+  }
+  const ev=evaluar(serie,excluirCOVID,serie.claveCache+(excluirCOVID?"-c":"")+"-e");
+  const met=ev.res[modeloKey]||ev.res.ensemble;
+  // Explicación contextual del error en prueba
+  if(peaje.estado==="activo"&&!isNaN(met.wape)&&met.wape>0.5){
+    const cambioTrainTest=compararNiveles(serie);
+    if(cambioTrainTest&&cambioTrainTest.ratio<0.5){
+      aviso.innerHTML+=`<div class="aviso"><b>El error en prueba (WAPE ${fmtPct(met.wape)}) no refleja la calidad del pronóstico actual.</b> Entre el entrenamiento (2014–2023) y la prueba (2024–2026) el nivel de recaudo de este peaje cayó a <b>${fmtPct(cambioTrainTest.ratio,0)}</b> de su promedio, un cambio que ningún modelo entrenado con los años anteriores podía anticipar. El pronóstico vigente (que usa el régimen reciente) sí es coherente con los datos actuales.</div>`;
+    }else{
+      aviso.innerHTML+=`<div class="info"><b>Alta dispersión en prueba (WAPE ${fmtPct(met.wape)}).</b> El peaje presenta variaciones fuertes entre meses; revise la serie histórica y el intervalo de confianza antes de usar el pronóstico para toma de decisiones.</div>`;
+    }
+  }
+  let fut=[],banda=null,rmse=met.rmse;
+  if(peaje.estado==="activo"){
+    fut=pronosticoFuturo(serie,modeloKey,excluirCOVID,usarTodo,H);
+    if(isNaN(rmse))rmse=media(serie.filter(s=>s.v>0).map(s=>s.v))*0.15;
+    banda=mostrarIC?intervaloConfianza(fut,met,rmse):null;
+  }
+  const train=serie.filter(s=>s.t<=TRAIN_END_T&&!s.faltante).map(s=>({t:s.t,v:s.v,k:"Real"}));
+  const test=serie.filter(s=>s.t>=TEST_START_T&&!s.faltante).map(s=>({t:s.t,v:s.v,k:"Real"}));
+  const predTest=(mostrarTest&&peaje.estado==="activo")?ev.testTs.map((t,i)=>({t,v:met.pred[i],k:"Predicción prueba"})):null;
+  const futuro=fut.map(f=>({t:f.t,v:f.pred,k:"Pronóstico"}));
+  const todos=[...train,...test,...futuro];
+  const yMax=todos.length?Math.max(...todos.map(p=>p.v))*1.15:1;
+  dibujarSerie($("graficoPrincipal"),{tMin:2014*12,tMax:FIN_T+H,yMax,train,test,predTest,futuro,banda});
+  $("kpis").innerHTML=
+    kpiHTML("Total histórico",fmtCOP(st.total),"Participación "+fmtPct(st.participacion))+
+    kpiHTML("Promedio mensual",fmtCOP(st.prom),"Mediana "+fmtCOP(st.med))+
+    kpiHTML("WAPE en prueba",peaje.estado==="activo"?fmtPct(met.wape):"No evaluable","MAPE "+fmtPct(met.mape))+
+    kpiHTML("Próximo mes",fut.length?fmtCOP(fut[0].pred):"—","Pronóstico 2026-06");
+  llenarTablaPronostico(fut,ev,met,rmse,mostrarIC);
+  llenarTablaModelos(ev.res);
+}
+function llenarTablaPronostico(fut,ev,met,rmse,mostrarIC){
+  const tb=$("tablaPronostico").querySelector("tbody");tb.innerHTML="";
+  const mapa=new Map(ev.testTs.map((t,i)=>[t,{real:ev.actual[i],pred:met.pred[i]}]));
+  const bandaIC=intervaloConfianza(fut,met,rmse);
+  fut.forEach((f,i)=>{
+    const inf=mostrarIC?bandaIC[i].inf:NaN;
+    const sup=mostrarIC?bandaIC[i].sup:NaN;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${etiqueta(f.t)}</td><td class="mono">${fmtCOP(f.pred)}</td><td class="mono">${mostrarIC?fmtCOP(inf):"—"}</td><td class="mono">${mostrarIC?fmtCOP(sup):"—"}</td><td>—</td><td>—</td>`;
+    tb.appendChild(tr);
+  });
+  // filas de prueba (para ver error)
+  ev.testTs.forEach((t,i)=>{
+    const real=ev.actual[i],pred=met.pred[i];
+    if(real==null)return;
+    const err=real>0?((pred-real)/real):NaN;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${etiqueta(t)} (prueba)</td><td class="mono">${fmtCOP(pred)}</td><td>—</td><td>—</td><td class="mono">${fmtCOP(real)}</td><td class="mono">${fmtPct(err)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+function llenarTablaModelos(res){
+  const tb=$("tablaModelos").querySelector("tbody");tb.innerHTML="";
+  const orden=["ensemble","ols","hw","decomp","naive"];
+  const nombres={ensemble:"Ensemble",ols:"OLS tendencia+est.",hw:"Holt-Winters",decomp:"Descomposición",naive:"Naive estacional"};
+  orden.forEach(k=>{
+    const r=res[k];if(!r)return;
+    // resalta el mejor WAPE
+    let mejorW=Infinity;
+    orden.forEach(kk=>{if(res[kk]&&!isNaN(res[kk].wape)&&res[kk].wape<mejorW)mejorW=res[kk].wape;});
+    const mejor=!isNaN(r.wape)&&Math.abs(r.wape-mejorW)<1e-9;
+    const tr=document.createElement("tr");
+    if(k==="ensemble")tr.style.background="#f4f8fb";
+    tr.innerHTML=`<td>${nombres[k]}${mejor?' <span class="pill">mejor</span>':''}</td><td class="mono">${fmtCOP(r.mae)}</td><td class="mono">${fmtCOP(r.rmse)}</td><td class="mono">${fmtPct(r.wape)}</td><td class="mono">${fmtPct(r.mape)}</td><td class="mono">${fmtPct(r.smape)}</td><td class="mono">${fmtNum(r.mase,2)}</td><td class="mono">${fmtCOP(r.sesgo)}</td><td class="mono">${fmtNum(r.r2,3)}</td>`;
+    tb.appendChild(tr);
+  });
+  // fila de pesos del ensemble
+  const ens=res.ensemble;
+  if(ens&&ens.pesos){
+    const tr=document.createElement("tr");
+    tr.style.background="#fafafa";
+    const txt=Object.entries(ens.pesos).map(([k,v])=>`${nombres[k]||k}: ${fmtPct(v,0)}`).join(" · ");
+    tr.innerHTML=`<td colspan="9" style="font-size:.8rem;color:#5d6d7e"><b>Pesos del ensemble</b> (según validación rolling-origin sobre los últimos 24 meses de entrenamiento, sin usar el periodo de prueba): ${txt}</td>`;
+    tb.appendChild(tr);
+  }
+}
+
+/* ================= Resumen ================= */
+let sortKey="total",sortDir=-1;
+function actualizarResumen(){
+  const serieTotal=DATOS.total_mensual.map(x=>({t:tIdx(x.y,x.m),y:x.y,m:x.m,v:x.recaudo}));
+  const totalHist=serieTotal.reduce((s,x)=>s+x.v,0);
+  const activos=PEAJES.filter(p=>p.estado==="activo").length;
+  const cerrados=PEAJES.filter(p=>p.estado==="cerrado").length;
+  const sinR=PEAJES.filter(p=>p.estado==="sin_recaudo").length;
+  $("kpisGlobal").innerHTML=
+    kpiHTML("Recaudo total 2014–2026",fmtCOP(totalHist),"Suma de todos los peajes")+
+    kpiHTML("Peajes activos",activos,"Cerrados: "+cerrados+" · Sin recaudo: "+sinR)+
+    kpiHTML("Promedio mensual nacional",fmtCOP(media(serieTotal.map(s=>s.v))),"2014–2026")+
+    kpiHTML("Registros analizados",fmtNum(DATOS.meta.n_filas_originales,0),"Duplicados eliminados: "+DATOS.meta.n_duplicados_eliminados);
+  // por año
+  const porAnio={};
+  serieTotal.forEach(s=>{porAnio[s.y]=(porAnio[s.y]||0)+s.v;});
+  const anios=Object.keys(porAnio).map(Number).sort((a,b)=>a-b);
+  dibujarBarras($("graficoAnual"),anios.map(String),anios.map(y=>porAnio[y]),"#1b4f72",v=>fmtCOPcorto(v));
+  // estacionalidad global
+  const porMes={};for(let m=1;m<=12;m++)porMes[m]=[];
+  serieTotal.forEach(s=>porMes[s.m].push(s.v));
+  dibujarBarras($("graficoEstacional"),MESES,MESES.map((_,i)=>media(porMes[i+1])), "#0e9f6e",v=>fmtCOPcorto(v));
+  // top 15
+  const top=[...PEAJES].sort((a,b)=>STATS[b.nombre].total-STATS[a.nombre].total).slice(0,15);
+  dibujarBarrasH($("graficoTop"),top.map(p=>p.nombre),top.map(p=>STATS[p.nombre].total),"#1b4f72",v=>fmtCOPcorto(v));
+  // calidad
+  const nParcial=PEAJES.reduce((s,p)=>s+p.n_parciales,0);
+  const nCeros=PEAJES.reduce((s,p)=>s+p.n_ceros,0);
+  const nFalt=PEAJES.reduce((s,p)=>s+p.n_faltantes,0);
+  const sinNombres=PEAJES.filter(p=>p.estado==="sin_recaudo").map(p=>p.nombre).join(", ");
+  const cerrNombres=PEAJES.filter(p=>p.estado==="cerrado").map(p=>p.nombre).join(", ");
+  $("calidadDatos").innerHTML=`
+    <table><tbody>
+    <tr><td>Registros originales</td><td class="mono">${fmtNum(DATOS.meta.n_filas_originales,0)}</td></tr>
+    <tr><td>Duplicados exactos eliminados</td><td class="mono">${DATOS.meta.n_duplicados_eliminados}</td></tr>
+    <tr><td>Meses parciales (&lt;28 días)</td><td class="mono">${nParcial}</td></tr>
+    <tr><td>Meses en cero</td><td class="mono">${nCeros}</td></tr>
+    <tr><td>Meses faltantes (huecos)</td><td class="mono">${nFalt}</td></tr>
+    <tr><td>Peajes sin recaudo</td><td>${sinR}: ${sinNombres}</td></tr>
+    <tr><td>Peajes cerrados</td><td>${cerrados}: ${cerrNombres}</td></tr>
+    <tr><td>Caída COVID abr-2020 (total)</td><td>El total de abr-2020 fue ~0.2 mil M frente a ~250 mil M habituales (cierre por cuarentena).</td></tr>
+    </tbody></table>`;
+  llenarTablaStats();
+}
+function llenarTablaStats(){
+  const q=($("filtroStats").value||"").toLowerCase();
+  // WAPE por peaje (modelo ensemble, prueba). El cálculo es costoso (162 peajes ×
+  // 4 modelos × validación rolling), por lo que se hace de forma progresiva:
+  // primero se pinta la tabla con los indicadores estadísticos y luego se van
+  // rellenando los WAPE por lotes para no bloquear la interfaz.
+  const filas=PEAJES.map(p=>{
+    const st=STATS[p.nombre];
+    return {nombre:p.nombre,estado:p.estado,n_meses:p.n_meses,total:st.total,promedio:st.prom,mediana:st.med,de:st.de,cv:st.cv,cagr:st.cagr,
+      pico:isNaN(st.pico)?"—":MESES_L[st.pico-1],valle:isNaN(st.valle)?"—":MESES_L[st.valle-1],pctCeros:st.pctCeros,wape:NaN,
+      el:null};
+  }).filter(r=>!q||r.nombre.toLowerCase().includes(q)||r.estado.includes(q));
+  ordenarTablaStats(filas);
+  const tb=$("tablaStats").querySelector("tbody");tb.innerHTML="";
+  filas.forEach(r=>{
+    const tr=document.createElement("tr");tr.style.cursor="pointer";
+    const tag=r.estado==="activo"?'<span class="tag activo">Activo</span>':r.estado==="cerrado"?'<span class="tag cerrado">Cerrado</span>':'<span class="tag sin">Sin recaudo</span>';
+    tr.innerHTML=`<td><b>${r.nombre}</b></td><td>${tag}</td><td class="mono">${r.n_meses}</td><td class="mono">${fmtCOP(r.total)}</td><td class="mono">${fmtCOP(r.promedio)}</td><td class="mono">${fmtCOP(r.mediana)}</td><td class="mono">${fmtCOP(r.de)}</td><td class="mono">${fmtNum(r.cv,2)}</td><td class="mono">${fmtPct(r.cagr)}</td><td>${r.pico}</td><td>${r.valle}</td><td class="mono">${fmtPct(r.pctCeros)}</td><td class="mono" data-wape>${r.estado==="activo"?"…":"—"}</td>`;
+    r.fila=tr; r.el=tr.querySelector("[data-wape]");
+    tr.addEventListener("click",()=>{
+      $("peajeSelect").value=r.nombre;modoTotal=false;
+      $("btnTotal").style.display="";$("btnPeaje").style.display="none";
+      cambiarTab("estimacion");actualizarEstimacion();
+    });
+    tb.appendChild(tr);
+  });
+  // Cálculo progressive del WAPE por lotes
+  pendientesWape=filas.filter(r=>r.estado==="activo");
+  procesarLoteWape();
+}
+/* ===== Procesamiento por lotes del WAPE (evita bloquear la UI) ===== */
+let filasStatsActuales=[];
+function ordenarTablaStats(filas){
+  const arr=filas||filasStatsActuales;
+  if(!arr||!arr.length)return;
+  filasStatsActuales=arr;
+  arr.sort((a,b)=>{
+    const va=a[sortKey],vb=b[sortKey];
+    if(typeof va==="string")return sortDir*va.localeCompare(vb);
+    // Los valores no disponibles (NaN) siempre al final, en ambos sentidos.
+    const na=va==null||isNaN(va),nb=vb==null||isNaN(vb);
+    if(na&&nb)return 0;
+    if(na)return 1;
+    if(nb)return -1;
+    return sortDir*(va-vb);
+  });
+  const tb=$("tablaStats").querySelector("tbody");
+  if(!tb)return;
+  arr.forEach(r=>{if(r.fila)tb.appendChild(r.fila);});
+}
+let pendientesWape=[], loteTimer=null;
+function procesarLoteWape(){
+  if(loteTimer){clearTimeout(loteTimer);loteTimer=null;}
+  if(!pendientesWape.length)return;
+  const lote=pendientesWape.splice(0,6);
+  lote.forEach(r=>{
+    const serie=serieDe(porNombre[r.nombre]);
+    const ev=evaluar(serie,false,serie.claveCache+"-e");
+    const w=ev.res.ensemble?ev.res.ensemble.wape:NaN;
+    r.wape=w;
+    if(r.el)r.el.textContent=fmtPct(w);
+  });
+  if(pendientesWape.length){
+    loteTimer=setTimeout(procesarLoteWape,0);
+  }else{
+    // Al terminar el cálculo se reordena la tabla con los WAPE ya disponibles.
+    if(typeof ordenarTablaStats==="function")ordenarTablaStats();
+  }
+}
+
+/* ================= Reporte ================= */
+function generarReporte(){
+  const nombre=$("reporteSelect").value;
+  const modeloKey=$("reporteModelo").value;
+  const peaje=porNombre[nombre];
+  const st=STATS[nombre];
+  const serie=serieDe(peaje);
+  const excluirCOVID=false;
+  const ev=peaje.estado==="activo"?evaluar(serie,excluirCOVID,serie.claveCache+"-rep-e"):null;
+  const met=ev?(ev.res[modeloKey]||ev.res.ensemble):null;
+  const fut=peaje.estado==="activo"?pronosticoFuturo(serie,modeloKey,excluirCOVID,true,12):[];
+  const rmse=met&&!isNaN(met.rmse)?met.rmse:media(serie.filter(s=>s.v>0).map(s=>s.v))*0.15;
+  const banda=intervaloConfianza(fut,met,rmse);
+  const train=serie.filter(s=>s.t<=TRAIN_END_T&&!s.faltante).map(s=>({t:s.t,v:s.v,k:"Real"}));
+  const test=serie.filter(s=>s.t>=TEST_START_T&&!s.faltante).map(s=>({t:s.t,v:s.v,k:"Real"}));
+  const predTest=ev?ev.testTs.map((t,i)=>({t,v:met.pred[i],k:"Predicción prueba"})):null;
+  const futuro=fut.map(f=>({t:f.t,v:f.pred,k:"Pronóstico"}));
+  const yMax=Math.max(1,...[...train,...test,...futuro].map(p=>p.v))*1.15;
+  const nombresModelo={ensemble:"Ensemble",ols:"Tendencia + estacionalidad (OLS en log)",hw:"Holt-Winters amortiguado (log)",decomp:"Descomposición clásica",naive:"Naive estacional"};
+  const estadoTxt=peaje.estado==="activo"?"Activo":peaje.estado==="cerrado"?"Cerrado":"Sin recaudo";
+  // interpretación automática
+  const tendenciaTxt=isNaN(st.cagr)?"no se pudo calcular por historia insuficiente":(st.cagr>=0?`creciente (CAGR ${fmtPct(st.cagr)} anual)`:`decreciente (CAGR ${fmtPct(st.cagr)} anual)`);
+  const estTxt=isNaN(st.pico)?"—":`pico en ${MESES_L[st.pico-1]} y valle en ${MESES_L[st.valle-1]}`;
+  const covidTxt=isNaN(st.covidDip)?"sin datos comparables":`en abril de 2020 recaudó solo el ${fmtPct(st.covidDip,0)} del promedio de abr–may 2019`;
+  const interp=peaje.estado!=="activo"
+    ? `El peaje ${nombre} se clasifica como <b>${estadoTxt.toLowerCase()}</b> (${peaje.inicio} a ${peaje.fin}). No se genera pronóstico futuro.`
+    : `El peaje ${nombre} recaudó <b>${fmtCOP(st.total)}</b> entre ${peaje.inicio} y ${peaje.fin}, con un promedio mensual de <b>${fmtCOP(st.prom)}</b> y una mediana de <b>${fmtCOP(st.med)}</b> (desviación estándar ${fmtCOP(st.de)}, CV ${fmtNum(st.cv,2)}). Su participación en el total nacional es del <b>${fmtPct(st.participacion)}</b>. La tendencia de largo plazo es <b>${tendenciaTxt}</b> y la estacionalidad muestra ${estTxt}. Respecto a COVID-19, ${covidTxt}. El modelo ${nombresModelo[modeloKey]} obtuvo en prueba (2024–2026) un WAPE de <b>${fmtPct(met.wape)}</b>, MAPE de <b>${fmtPct(met.mape)}</b>, RMSE de <b>${fmtCOP(met.rmse)}</b>, MASE de <b>${fmtNum(met.mase,2)}</b> (${met.mase<1?"mejor":"similar o peor"} que el modelo naive) y R² de <b>${fmtNum(met.r2,3)}</b>. El pronóstico para los próximos 12 meses asciende a <b>${fmtCOP(fut.reduce((s,f)=>s+f.pred,0))}</b> (próximo mes: ${fut.length?fmtCOP(fut[0].pred):"—"}).`;
+  const filasFut=fut.map((f,i)=>`<tr><td>${etiqueta(f.t)}</td><td class="mono">${fmtCOP(f.pred)}</td><td class="mono">${fmtCOP(banda[i].inf)}</td><td class="mono">${fmtCOP(banda[i].sup)}</td></tr>`).join("");
+  const filasTest=ev?ev.testTs.map((t,i)=>{const real=ev.actual[i];if(real==null)return "";const err=real>0?((met.pred[i]-real)/real):NaN;return `<tr><td>${etiqueta(t)}</td><td class="mono">${fmtCOP(met.pred[i])}</td><td class="mono">${fmtCOP(real)}</td><td class="mono">${fmtPct(err)}</td></tr>`;}).join(""):"<tr><td colspan='4'>No evaluable.</td></tr>";
+  const html=`
+  <div class="card reporte" id="reporteImprimible">
+    <h2>Reporte de análisis — Peaje ${nombre}</h2>
+    <p style="color:var(--suave);font-size:13px">Generado el ${new Date().toLocaleString("es-CO")} · Fuente: ${DATOS.meta.fuente} · Modelo: ${nombresModelo[modeloKey]} · Entrenamiento 2014–2023, prueba 2024–2026</p>
+    <div class="ficha">
+      <div><b>Estado</b><span>${estadoTxt}</span></div>
+      <div><b>Periodo</b><span>${peaje.inicio} a ${peaje.fin}</span></div>
+      <div><b>Meses con recaudo</b><span>${st.nPos} de ${peaje.n_meses}</span></div>
+      <div><b>Total histórico</b><span>${fmtCOP(st.total)}</span></div>
+      <div><b>Promedio mensual</b><span>${fmtCOP(st.prom)}</span></div>
+      <div><b>Mediana</b><span>${fmtCOP(st.med)}</span></div>
+      <div><b>Mínimo / Máximo</b><span>${fmtCOP(st.mn)} / ${fmtCOP(st.mx)}</span></div>
+      <div><b>Desv. estándar (CV)</b><span>${fmtCOP(st.de)} (${fmtNum(st.cv,2)})</span></div>
+      <div><b>CAGR</b><span>${fmtPct(st.cagr)}</span></div>
+      <div><b>Mes pico / valle</b><span>${isNaN(st.pico)?"—":MESES_L[st.pico-1]} / ${isNaN(st.valle)?"—":MESES_L[st.valle-1]}</span></div>
+      <div><b>Recaudo FSV / Sobrante</b><span>${fmtCOP(st.fsv)} / ${fmtCOP(st.sob)}</span></div>
+      <div><b>% meses cero / parciales</b><span>${fmtPct(st.pctCeros)} / ${fmtPct(st.pctParcial)}</span></div>
+    </div>
+    <h3>Serie histórica y pronóstico (12 meses)</h3>
+    <div class="grafico" id="graficoReporte"></div>
+    <h3>Interpretación</h3>
+    <p>${interp}</p>
+    <h3>Pronóstico próximos 12 meses</h3>
+    <div class="tabla-wrap"><table><thead><tr><th>Mes</th><th>Pronóstico</th><th>IC inf. 95%</th><th>IC sup. 95%</th></tr></thead><tbody>${filasFut||"<tr><td colspan='4'>Sin pronóstico.</td></tr>"}</tbody></table></div>
+    <h3>Evaluación en prueba (2024–2026)</h3>
+    <p>MAE ${fmtCOP(met?met.mae:NaN)} · RMSE ${fmtCOP(met?met.rmse:NaN)} · <b>WAPE ${fmtPct(met?met.wape:NaN)}</b> · MAPE ${fmtPct(met?met.mape:NaN)} · sMAPE ${fmtPct(met?met.smape:NaN)} · MASE ${fmtNum(met?met.mase:NaN,2)} · Sesgo ${fmtCOP(met?met.sesgo:NaN)} · R² ${fmtNum(met?met.r2:NaN,3)}</p>
+    <div class="tabla-wrap"><table><thead><tr><th>Mes</th><th>Predicción</th><th>Real</th><th>Error %</th></tr></thead><tbody>${filasTest}</tbody></table></div>
+    <h3>Metodología y advertencias</h3>
+    <p style="font-size:13px">Entrenamiento en los primeros 10 años (2014–2023) y prueba en 2024–2026. Los meses parciales se normalizan a 30.44 días. El intervalo de confianza 95% es proporcional al nivel pronosticado y se deriva del error relativo (WAPE) del modelo en el periodo de prueba. El ensemble combina los cuatro modelos con pesos determinados por validación rolling-origin sobre los últimos 24 meses de entrenamiento (sin usar el periodo de prueba). Advertencias: historia corta, impacto COVID-19, posibles cambios de tarifa o cierre del peaje no reflejados en los datos.</p>
+    <div class="no-print" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="window.print()">Imprimir / Guardar PDF</button>
+      <button class="btn sec" id="btnDescHTML">Descargar HTML</button>
+      <button class="btn sec" id="btnDescCSV">Descargar pronóstico CSV</button>
+      <button class="btn sec" id="btnDescJSON">Descargar JSON</button>
+    </div>
+  </div>`;
+  $("reporteContenedor").innerHTML=html;
+  dibujarSerie($("graficoReporte"),{tMin:2014*12,tMax:FIN_T+12,yMax,train,test,predTest,futuro,banda});
+  $("btnDescHTML").addEventListener("click",()=>{
+    const doc=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte ${nombre}</title><style>body{font-family:sans-serif;max-width:900px;margin:20px auto;padding:0 16px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #ccc;padding:6px;text-align:right}th:first-child,td:first-child{text-align:left}.ficha{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ficha div{border:1px solid #ccc;padding:8px;border-radius:6px}</style></head><body>${html.replace(/<div class="no-print"[\s\S]*?<\/div>\s*<\/div>$/,"</div>")}</body></html>`;
+    descargar(`reporte_${nombre}.html`,doc,"text/html;charset=utf-8");
+  });
+  $("btnDescCSV").addEventListener("click",()=>{
+    const csv="mes;pronostico;ic_inferior;ic_superior\n"+fut.map((f,i)=>`${etiqueta(f.t)};${Math.round(f.pred)};${Math.round(banda[i].inf)};${Math.round(banda[i].sup)}`).join("\n");
+    descargar(`pronostico_${nombre}.csv`,csv,"text/csv;charset=utf-8");
+  });
+  $("btnDescJSON").addEventListener("click",()=>{
+    descargar(`reporte_${nombre}.json`,JSON.stringify({peaje:nombre,estado:peaje.estado,periodo:{entrenamiento:"2014-01 a 2023-12",prueba:"2024-01 a 2026-05"},stats:{total:st.total,promedio:st.prom,mediana:st.med,desviacion:st.de,cv:st.cv,cagr:st.cagr,pico:MESES_L[st.pico-1],valle:MESES_L[st.valle-1]},metricas:met?{mae:met.mae,rmse:met.rmse,wape:met.wape,mape:met.mape,smape:met.smape,mase:met.mase,sesgo:met.sesgo,r2:met.r2}:null,pesos_ensemble:met&&met.pesos?met.pesos:null,ruptura_estructural:detectarRuptura(serie),pronostico:fut.map((f,i)=>({mes:etiqueta(f.t),pred:f.pred,ic95_inferior:banda[i].inf,ic95_superior:banda[i].sup}))},null,2),"application/json");
+  });
+}
+
+/* ================= Navegación e inicio ================= */
+function cambiarTab(tab){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("activo",b.dataset.tab===tab));
+  document.querySelectorAll(".seccion").forEach(s=>s.style.display="none");
+  $("tab-"+tab).style.display="block";
+  if(tab==="resumen")actualizarResumen();
+}
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>cambiarTab(b.dataset.tab)));
+["modeloSelect","horizonte","chkIC","chkCOVID","chkTodo","chkTest"].forEach(id=>$(id).addEventListener("change",actualizarEstimacion));
+$("peajeSelect").addEventListener("change",()=>{modoTotal=false;$("btnTotal").style.display="";$("btnPeaje").style.display="none";actualizarEstimacion();});
+$("btnTotal").addEventListener("click",()=>{modoTotal=true;$("btnTotal").style.display="none";$("btnPeaje").style.display="";actualizarEstimacion();});
+$("btnPeaje").addEventListener("click",()=>{modoTotal=false;$("btnTotal").style.display="";$("btnPeaje").style.display="none";actualizarEstimacion();});
+$("filtroStats").addEventListener("input",llenarTablaStats);
+$("tablaStats").querySelectorAll("th").forEach(th=>th.addEventListener("click",()=>{
+  const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=-1;}
+  // Si el WAPE ya fue calculado se reordena en el sitio; si no, se reconstruye la tabla.
+  if(filasStatsActuales.length)ordenarTablaStats();
+  else llenarTablaStats();
+}));
+$("btnCSVStats").addEventListener("click",()=>{
+  const filas=PEAJES.map(p=>{const st=STATS[p.nombre];return [p.nombre,p.estado,p.n_meses,Math.round(st.total),Math.round(st.prom),Math.round(st.med),Math.round(st.de),st.cv.toFixed(3),st.cagr==null||isNaN(st.cagr)?"":st.cagr.toFixed(4),isNaN(st.pico)?"":MESES_L[st.pico-1],isNaN(st.valle)?"":MESES_L[st.valle-1],st.pctCeros.toFixed(3)].join(";");});
+  descargar("resumen_peajes.csv","peaje;estado;meses;total;promedio;mediana;desv;cv;cagr;mes_pico;mes_valle;pct_ceros\n"+filas.join("\n"),"text/csv;charset=utf-8");
+});
+$("btnReporte").addEventListener("click",generarReporte);
+
+(function init(){
+  $("badges").innerHTML=`<span class="badge">${DATOS.meta.rango}</span><span class="badge">${DATOS.meta.split.descripcion}</span><span class="badge">${DATOS.meta.n_peajes} peajes</span><span class="badge">Generado ${DATOS.meta.generado}</span>`;
+  $("nDup").textContent=DATOS.meta.n_duplicados_eliminados;
+  poblarSelects();
+  actualizarEstimacion();
+})();
+</script>
+</body>
+</html>
